@@ -1,0 +1,3 @@
+Revision History:
+
+2026/06/19: The default loading spinner replaced by new loading animation
