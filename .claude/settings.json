@@ -1,0 +1,7 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://arvancloudai.ir/gateway/models/Claude-Sonnet-4.6/RMr4RMkKhdmoqpjj-zOv75JJvNriL0d7uFCLavvDuiQpOTBCf8QY1p4mHZs3vMC2SHoYF-B5iWDCyrVWrHEBEVHdkLlN4IMhJo4VRDsnRTEq55fz2tgufpn3vG866LkdsyslS2DF4060UjehaK7F7_fFoBahqAELyRaSq4MNX2ZEuQkIxB4xzrbbQA02HyqC06nK663rs4rty-feFTzC_D2ykfAUAb2iCTbYuS5dguZjdn-JNAp0TPMsPt1EGo5Hy_Fxs5eLV50/v1",
+    "ANTHROPIC_API_KEY": "629e2c24-8a18-5f84-a612-745efbf2bf55",
+    "ANTHROPIC_MODEL": "Claude-Sonnet-4.6"
+  }
+}
