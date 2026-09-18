@@ -1,6 +1,6 @@
 Revision History:
 
-2026/09/18: DevicePage.jsx edited to test tabs as the first component.
+2026/09/18: DevicePage.jsx edited to test tabs as the first component
             SlidingTabPanels.jsx created to change the settings view to tabs
             /.calude/.settings.json file created for Claude Agent Code
             vite.config.js's proxy edited to interract with the real server
