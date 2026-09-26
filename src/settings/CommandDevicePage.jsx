@@ -1,18 +1,14 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
   Container,
   Button,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import BaseCommandView from './components/BaseCommandView';
 import PageLayout from '../common/components/PageLayout';
 import SettingsMenu from './components/SettingsMenu';
+import SlidingTabPanels from '../common/components/SlidingTabPanels';
 import { useCatch } from '../reactHelper';
 import useSettingsStyles from './common/useSettingsStyles';
 import fetchOrThrow from '../common/util/fetchOrThrow';
@@ -48,24 +44,29 @@ const CommandDevicePage = () => {
 
   const validate = () => savedId || (item && item.type);
 
+  const tabs = [
+    {
+      id: 'required',
+      label: t('sharedRequired'),
+      content: (
+        <div className={classes.details}>
+          <BaseCommandView
+            deviceId={id}
+            item={item}
+            setItem={setItem}
+            includeSaved
+            savedId={savedId}
+            setSavedId={setSavedId}
+          />
+        </div>
+      ),
+    },
+  ];
+
   return (
     <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'deviceCommand']}>
       <Container maxWidth="xs" className={classes.container}>
-        <Accordion defaultExpanded>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle1">{t('sharedRequired')}</Typography>
-          </AccordionSummary>
-          <AccordionDetails className={classes.details}>
-            <BaseCommandView
-              deviceId={id}
-              item={item}
-              setItem={setItem}
-              includeSaved
-              savedId={savedId}
-              setSavedId={setSavedId}
-            />
-          </AccordionDetails>
-        </Accordion>
+        <SlidingTabPanels tabs={tabs} />
         <div className={classes.buttons}>
           <Button type="button" color="primary" variant="outlined" onClick={() => navigate(-1)}>
             {t('sharedCancel')}

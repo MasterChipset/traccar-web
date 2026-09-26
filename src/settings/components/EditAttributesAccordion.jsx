@@ -41,6 +41,7 @@ const EditAttributesAccordion = ({
   setAttributes,
   definitions,
   focusAttribute,
+  bare,
 }) => {
   const { classes } = useSettingsStyles();
   const t = useTranslation();
@@ -109,7 +110,7 @@ const EditAttributesAccordion = ({
   };
 
   const getDisplayValue = (value, dataType) => {
-    if (value) {
+    if (value !== undefined && value !== null) {
       switch (dataType) {
         case 'speed':
           return speedFromKnots(value, speedUnit);
@@ -176,70 +177,86 @@ const EditAttributesAccordion = ({
     }
   };
 
-  return features.disableAttributes ? (
-    ''
-  ) : (
+  const content = (
+    <>
+      {convertToList(attributes).map(({ key, value, type, dataType }) => {
+        if (type === 'boolean') {
+          return (
+            <Grid container direction="row" justifyContent="space-between" key={key}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={value}
+                    onChange={(e) => updateAttribute(key, e.target.checked)}
+                  />
+                }
+                label={getAttributeName(key, dataType)}
+              />
+              <IconButton
+                size="small"
+                className={classes.removeButton}
+                onClick={() => deleteAttribute(key)}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Grid>
+          );
+        }
+        return (
+          <FormControl key={key}>
+            <InputLabel>{getAttributeName(key, dataType)}</InputLabel>
+            <OutlinedInput
+              label={getAttributeName(key, dataType)}
+              type={type === 'number' ? 'number' : 'text'}
+              value={getDisplayValue(value, dataType)}
+              onChange={(e) => updateAttribute(key, e.target.value, type, dataType)}
+              autoFocus={focusAttribute === key}
+              endAdornment={
+                <InputAdornment position="end">
+                  <IconButton size="small" edge="end" onClick={() => deleteAttribute(key)}>
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              }
+            />
+          </FormControl>
+        );
+      })}
+      <Button
+        variant="outlined"
+        color="primary"
+        onClick={() => setAddDialogShown(true)}
+        startIcon={<AddIcon />}
+      >
+        {t('sharedAdd')}
+      </Button>
+      <AddAttributeDialog
+        open={addDialogShown}
+        onResult={handleAddResult}
+        definitions={definitions}
+      />
+    </>
+  );
+
+  if (features.disableAttributes) {
+    return '';
+  }
+
+  // Used inside a tab (e.g. SlidingTabPanels), which already
+  // supplies its own tab label as the section header — so this
+  // skips the Accordion/AccordionSummary wrapper to avoid a
+  // redundant nested "Attributes" header inside the tab.
+  if (bare) {
+    return <div className={classes.details}>{content}</div>;
+  }
+
+  return (
     <Accordion defaultExpanded={!!attribute}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography variant="subtitle1">{t('sharedAttributes')}</Typography>
       </AccordionSummary>
       <AccordionDetails className={classes.details}>
-        {convertToList(attributes).map(({ key, value, type, dataType }) => {
-          if (type === 'boolean') {
-            return (
-              <Grid container direction="row" justifyContent="space-between" key={key}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={value}
-                      onChange={(e) => updateAttribute(key, e.target.checked)}
-                    />
-                  }
-                  label={getAttributeName(key, dataType)}
-                />
-                <IconButton
-                  size="small"
-                  className={classes.removeButton}
-                  onClick={() => deleteAttribute(key)}
-                >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </Grid>
-            );
-          }
-          return (
-            <FormControl key={key}>
-              <InputLabel>{getAttributeName(key, dataType)}</InputLabel>
-              <OutlinedInput
-                label={getAttributeName(key, dataType)}
-                type={type === 'number' ? 'number' : 'text'}
-                value={getDisplayValue(value, dataType)}
-                onChange={(e) => updateAttribute(key, e.target.value, type, dataType)}
-                autoFocus={focusAttribute === key}
-                endAdornment={
-                  <InputAdornment position="end">
-                    <IconButton size="small" edge="end" onClick={() => deleteAttribute(key)}>
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
-                }
-              />
-            </FormControl>
-          );
-        })}
-        <Button
-          variant="outlined"
-          color="primary"
-          onClick={() => setAddDialogShown(true)}
-          startIcon={<AddIcon />}
-        >
-          {t('sharedAdd')}
-        </Button>
-        <AddAttributeDialog
-          open={addDialogShown}
-          onResult={handleAddResult}
-          definitions={definitions}
-        />
+        {content}
       </AccordionDetails>
     </Accordion>
   );

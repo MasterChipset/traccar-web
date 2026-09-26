@@ -1,15 +1,11 @@
 import { useState } from 'react';
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
   TextField,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import EditItemView from './components/EditItemView';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import BaseCommandView from './components/BaseCommandView';
+import SlidingTabPanels from '../common/components/SlidingTabPanels';
 import SettingsMenu from './components/SettingsMenu';
 import useSettingsStyles from './common/useSettingsStyles';
 
@@ -21,6 +17,23 @@ const CommandPage = () => {
 
   const validate = () => item && item.type;
 
+  const tabs = item && [
+    {
+      id: 'required',
+      label: t('sharedRequired'),
+      content: (
+        <div className={classes.details}>
+          <TextField
+            value={item.description || ''}
+            onChange={(event) => setItem({ ...item, description: event.target.value })}
+            label={t('sharedDescription')}
+          />
+          <BaseCommandView item={item} setItem={setItem} />
+        </div>
+      ),
+    },
+  ];
+
   return (
     <EditItemView
       endpoint="commands"
@@ -30,21 +43,7 @@ const CommandPage = () => {
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'sharedSavedCommand']}
     >
-      {item && (
-        <Accordion defaultExpanded>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle1">{t('sharedRequired')}</Typography>
-          </AccordionSummary>
-          <AccordionDetails className={classes.details}>
-            <TextField
-              value={item.description || ''}
-              onChange={(event) => setItem({ ...item, description: event.target.value })}
-              label={t('sharedDescription')}
-            />
-            <BaseCommandView item={item} setItem={setItem} />
-          </AccordionDetails>
-        </Accordion>
-      )}
+      {item && <SlidingTabPanels tabs={tabs} />}
     </EditItemView>
   );
 };

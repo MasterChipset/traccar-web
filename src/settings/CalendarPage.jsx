@@ -3,24 +3,21 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import TextField from '@mui/material/TextField';
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FileInput from '../common/components/FileInput';
 import EditItemView from './components/EditItemView';
 import EditAttributesAccordion from './components/EditAttributesAccordion';
+import SlidingTabPanels from '../common/components/SlidingTabPanels';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import SettingsMenu from './components/SettingsMenu';
 import { prefixString } from '../common/util/stringUtils';
 import { calendarsActions } from '../store';
 import { useCatch } from '../reactHelper';
+import useFeatures from '../common/util/useFeatures';
 import useSettingsStyles from './common/useSettingsStyles';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 
@@ -77,6 +74,7 @@ const CalendarPage = () => {
   const { classes } = useSettingsStyles();
   const dispatch = useDispatch();
   const t = useTranslation();
+  const features = useFeatures();
 
   const [item, setItem] = useState();
   const [file, setFile] = useState(null);
@@ -108,6 +106,141 @@ const CalendarPage = () => {
 
   const validate = () => item && item.name && item.data;
 
+  const tabs = item && [
+    {
+      id: 'required',
+      label: t('sharedRequired'),
+      content: (
+        <div className={classes.details}>
+          <TextField
+            value={item.name || ''}
+            onChange={(event) => setItem({ ...item, name: event.target.value })}
+            label={t('sharedName')}
+          />
+          <FormControl>
+            <InputLabel>{t('sharedType')}</InputLabel>
+            <Select
+              label={t('sharedType')}
+              value={simple ? 'simple' : 'custom'}
+              onChange={(e) =>
+                setItem({
+                  ...item,
+                  data: e.target.value === 'simple' ? simpleCalendar() : null,
+                })
+              }
+            >
+              <MenuItem value="simple">{t('calendarSimple')}</MenuItem>
+              <MenuItem value="custom">{t('reportCustom')}</MenuItem>
+            </Select>
+          </FormControl>
+          {simple ? (
+            <>
+              <TextField
+                label={t('reportFrom')}
+                type="datetime-local"
+                value={dayjs(lines[5].slice(-15)).locale('en').format('YYYY-MM-DDTHH:mm')}
+                onChange={(e) => {
+                  const time = formatCalendarTime(dayjs(e.target.value, 'YYYY-MM-DDTHH:mm'));
+                  setItem({ ...item, data: updateCalendar(lines, 5, `DTSTART;${time}`) });
+                }}
+              />
+              <TextField
+                label={t('reportTo')}
+                type="datetime-local"
+                value={dayjs(lines[6].slice(-15)).locale('en').format('YYYY-MM-DDTHH:mm')}
+                onChange={(e) => {
+                  const time = formatCalendarTime(dayjs(e.target.value, 'YYYY-MM-DDTHH:mm'));
+                  setItem({ ...item, data: updateCalendar(lines, 6, `DTEND;${time}`) });
+                }}
+              />
+              <FormControl>
+                <InputLabel>{t('calendarRecurrence')}</InputLabel>
+                <Select
+                  label={t('calendarRecurrence')}
+                  value={rule.frequency}
+                  onChange={(e) =>
+                    setItem({
+                      ...item,
+                      data: updateCalendar(lines, 7, formatRule({ frequency: e.target.value })),
+                    })
+                  }
+                >
+                  {['ONCE', 'DAILY', 'WEEKLY', 'MONTHLY'].map((it) => (
+                    <MenuItem key={it} value={it}>
+                      {t(prefixString('calendar', it.toLowerCase()))}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {['WEEKLY', 'MONTHLY'].includes(rule.frequency) && (
+                <FormControl>
+                  <InputLabel>{t('calendarDays')}</InputLabel>
+                  <Select
+                    multiple
+                    label={t('calendarDays')}
+                    value={rule.by}
+                    onChange={(e) =>
+                      setItem({
+                        ...item,
+                        data: updateCalendar(
+                          lines,
+                          7,
+                          formatRule({ ...rule, by: e.target.value }),
+                        ),
+                      })
+                    }
+                  >
+                    {rule.frequency === 'WEEKLY'
+                      ? [
+                          'sunday',
+                          'monday',
+                          'tuesday',
+                          'wednesday',
+                          'thursday',
+                          'friday',
+                          'saturday',
+                        ].map((it) => (
+                          <MenuItem key={it} value={it.substring(0, 2).toUpperCase()}>
+                            {t(prefixString('calendar', it))}
+                          </MenuItem>
+                        ))
+                      : Array.from({ length: 31 }, (_, i) => i + 1).map((it) => (
+                          <MenuItem key={it} value={String(it)}>
+                            {it}
+                          </MenuItem>
+                        ))}
+                  </Select>
+                </FormControl>
+              )}
+            </>
+          ) : (
+            <FileInput
+              placeholder={t('sharedSelectFile')}
+              value={file}
+              onChange={handleFileChange}
+            />
+          )}
+        </div>
+      ),
+    },
+    ...(!features.disableAttributes
+      ? [
+          {
+            id: 'attributes',
+            label: t('sharedAttributes'),
+            content: (
+              <EditAttributesAccordion
+                bare
+                attributes={item.attributes}
+                setAttributes={(attributes) => setItem({ ...item, attributes })}
+                definitions={{}}
+              />
+            ),
+          },
+        ]
+      : []),
+  ];
+
   return (
     <EditItemView
       endpoint="calendars"
@@ -119,130 +252,7 @@ const CalendarPage = () => {
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'sharedCalendar']}
     >
-      {item && (
-        <>
-          <Accordion defaultExpanded>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1">{t('sharedRequired')}</Typography>
-            </AccordionSummary>
-            <AccordionDetails className={classes.details}>
-              <TextField
-                value={item.name || ''}
-                onChange={(event) => setItem({ ...item, name: event.target.value })}
-                label={t('sharedName')}
-              />
-              <FormControl>
-                <InputLabel>{t('sharedType')}</InputLabel>
-                <Select
-                  label={t('sharedType')}
-                  value={simple ? 'simple' : 'custom'}
-                  onChange={(e) =>
-                    setItem({
-                      ...item,
-                      data: e.target.value === 'simple' ? simpleCalendar() : null,
-                    })
-                  }
-                >
-                  <MenuItem value="simple">{t('calendarSimple')}</MenuItem>
-                  <MenuItem value="custom">{t('reportCustom')}</MenuItem>
-                </Select>
-              </FormControl>
-              {simple ? (
-                <>
-                  <TextField
-                    label={t('reportFrom')}
-                    type="datetime-local"
-                    value={dayjs(lines[5].slice(-15)).locale('en').format('YYYY-MM-DDTHH:mm')}
-                    onChange={(e) => {
-                      const time = formatCalendarTime(dayjs(e.target.value, 'YYYY-MM-DDTHH:mm'));
-                      setItem({ ...item, data: updateCalendar(lines, 5, `DTSTART;${time}`) });
-                    }}
-                  />
-                  <TextField
-                    label={t('reportTo')}
-                    type="datetime-local"
-                    value={dayjs(lines[6].slice(-15)).locale('en').format('YYYY-MM-DDTHH:mm')}
-                    onChange={(e) => {
-                      const time = formatCalendarTime(dayjs(e.target.value, 'YYYY-MM-DDTHH:mm'));
-                      setItem({ ...item, data: updateCalendar(lines, 6, `DTEND;${time}`) });
-                    }}
-                  />
-                  <FormControl>
-                    <InputLabel>{t('calendarRecurrence')}</InputLabel>
-                    <Select
-                      label={t('calendarRecurrence')}
-                      value={rule.frequency}
-                      onChange={(e) =>
-                        setItem({
-                          ...item,
-                          data: updateCalendar(lines, 7, formatRule({ frequency: e.target.value })),
-                        })
-                      }
-                    >
-                      {['ONCE', 'DAILY', 'WEEKLY', 'MONTHLY'].map((it) => (
-                        <MenuItem key={it} value={it}>
-                          {t(prefixString('calendar', it.toLowerCase()))}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  {['WEEKLY', 'MONTHLY'].includes(rule.frequency) && (
-                    <FormControl>
-                      <InputLabel>{t('calendarDays')}</InputLabel>
-                      <Select
-                        multiple
-                        label={t('calendarDays')}
-                        value={rule.by}
-                        onChange={(e) =>
-                          setItem({
-                            ...item,
-                            data: updateCalendar(
-                              lines,
-                              7,
-                              formatRule({ ...rule, by: e.target.value }),
-                            ),
-                          })
-                        }
-                      >
-                        {rule.frequency === 'WEEKLY'
-                          ? [
-                              'sunday',
-                              'monday',
-                              'tuesday',
-                              'wednesday',
-                              'thursday',
-                              'friday',
-                              'saturday',
-                            ].map((it) => (
-                              <MenuItem key={it} value={it.substring(0, 2).toUpperCase()}>
-                                {t(prefixString('calendar', it))}
-                              </MenuItem>
-                            ))
-                          : Array.from({ length: 31 }, (_, i) => i + 1).map((it) => (
-                              <MenuItem key={it} value={String(it)}>
-                                {it}
-                              </MenuItem>
-                            ))}
-                      </Select>
-                    </FormControl>
-                  )}
-                </>
-              ) : (
-                <FileInput
-                  placeholder={t('sharedSelectFile')}
-                  value={file}
-                  onChange={handleFileChange}
-                />
-              )}
-            </AccordionDetails>
-          </Accordion>
-          <EditAttributesAccordion
-            attributes={item.attributes}
-            setAttributes={(attributes) => setItem({ ...item, attributes })}
-            definitions={{}}
-          />
-        </>
-      )}
+      {item && <SlidingTabPanels tabs={tabs} />}
     </EditItemView>
   );
 };

@@ -3,18 +3,14 @@ import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
   Container,
   TextField,
   Button,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import SettingsMenu from './components/SettingsMenu';
+import SlidingTabPanels from '../common/components/SlidingTabPanels';
 import { useCatchCallback } from '../reactHelper';
 import useSettingsStyles from './common/useSettingsStyles';
 import fetchOrThrow from '../common/util/fetchOrThrow';
@@ -45,36 +41,41 @@ const SharePage = () => {
     setLink(`${window.location.origin}?token=${token}`);
   }, [id, expiration, type, setLink]);
 
+  const tabs = [
+    {
+      id: 'required',
+      label: t('sharedRequired'),
+      content: (
+        <div className={classes.details}>
+          <TextField
+            value={item.name}
+            label={t(type === 'group' ? 'groupDialog' : 'sharedDevice')}
+            disabled
+          />
+          <TextField
+            label={t('userExpirationTime')}
+            type="datetime-local"
+            value={expiration}
+            onChange={(e) => setExpiration(e.target.value)}
+          />
+          <Button variant="outlined" color="primary" onClick={handleShare}>
+            {t('reportShow')}
+          </Button>
+          <TextField
+            value={link || ''}
+            onChange={(e) => setLink(e.target.value)}
+            label={t('sharedLink')}
+            slotProps={{ input: { readOnly: true } }}
+          />
+        </div>
+      ),
+    },
+  ];
+
   return (
     <PageLayout menu={<SettingsMenu />} breadcrumbs={['sharedShare']}>
       <Container maxWidth="xs" className={classes.container}>
-        <Accordion defaultExpanded>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle1">{t('sharedRequired')}</Typography>
-          </AccordionSummary>
-          <AccordionDetails className={classes.details}>
-            <TextField
-              value={item.name}
-              label={t(type === 'group' ? 'groupDialog' : 'sharedDevice')}
-              disabled
-            />
-            <TextField
-              label={t('userExpirationTime')}
-              type="datetime-local"
-              value={expiration}
-              onChange={(e) => setExpiration(e.target.value)}
-            />
-            <Button variant="outlined" color="primary" onClick={handleShare}>
-              {t('reportShow')}
-            </Button>
-            <TextField
-              value={link || ''}
-              onChange={(e) => setLink(e.target.value)}
-              label={t('sharedLink')}
-              slotProps={{ input: { readOnly: true } }}
-            />
-          </AccordionDetails>
-        </Accordion>
+        <SlidingTabPanels tabs={tabs} />
         <div className={classes.buttons}>
           <Button type="button" color="primary" variant="outlined" onClick={() => navigate(-1)}>
             {t('sharedCancel')}

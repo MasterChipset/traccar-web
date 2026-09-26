@@ -1,5 +1,8 @@
 Revision History:
 
+2026/09/27: All settings pages accordions converted to tabs
+            SlidingTabPanels.jsx modified
+
 2026/09/18: DevicePage.jsx edited to test tabs as the first component
             SlidingTabPanels.jsx created to change the settings view to tabs
             /.calude/.settings.json file created for Claude Agent Code

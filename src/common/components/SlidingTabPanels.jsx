@@ -45,12 +45,19 @@ import ArrowRightIcon from '@mui/icons-material/ArrowRight';
  *
  * arrowIconSize: number — font size (px) for the scroll-button
  * arrows shown when tabs overflow. Defaults to 32.
+ *
+ * initialId: string — which tab to open on. Defaults to the first
+ * tab when omitted or when it doesn't match any tab's id. Useful
+ * for deep-linking straight to a specific section (e.g. arriving
+ * via a query param that points at one field).
  */
 
-const SlidingTabPanels = ({ tabs, arrowIconSize = 32 }) => {
+const SlidingTabPanels = ({ tabs, arrowIconSize = 32, initialId }) => {
   const ids = tabs.map((tabDef) => tabDef.id);
 
-  const [activeId, setActiveId] = useState(ids[0]);
+  const [activeId, setActiveId] = useState(
+    initialId && ids.includes(initialId) ? initialId : ids[0],
+  );
   const [prevId, setPrevId] = useState(null);
   const [direction, setDirection] = useState(1);
   const [animatePhase, setAnimatePhase] = useState('idle');
@@ -175,7 +182,7 @@ const SlidingTabPanels = ({ tabs, arrowIconSize = 32 }) => {
 
       <Box
         sx={{
-          mt: 2,
+          pt: 2,
           width: '100%',
           position: 'relative',
           overflow: 'hidden',

@@ -3,10 +3,6 @@ import dayjs from 'dayjs';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
   Container,
   FormControl,
   InputLabel,
@@ -22,8 +18,8 @@ import {
   TextField,
   createFilterOptions,
   Button,
+  Typography,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CachedIcon from '@mui/icons-material/Cached';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useTranslation, useTranslationKeys } from '../common/components/LocalizationProvider';
@@ -32,6 +28,7 @@ import SettingsMenu from './components/SettingsMenu';
 import usePositionAttributes from '../common/attributes/usePositionAttributes';
 import { prefixString, unprefixString } from '../common/util/stringUtils';
 import SelectField from '../common/components/SelectField';
+import SlidingTabPanels from '../common/components/SlidingTabPanels';
 import useMapStyles from '../map/core/useMapStyles';
 import useMapOverlays from '../map/overlay/useMapOverlays';
 import { useCatch } from '../reactHelper';
@@ -108,16 +105,14 @@ const PreferencesPage = () => {
     throw Error(response.statusText);
   });
 
-  return (
-    <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'sharedPreferences']}>
-      <Container maxWidth="xs" className={classes.container}>
-        {!readonly && (
-          <>
-            <Accordion defaultExpanded>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="subtitle1">{t('mapTitle')}</Typography>
-              </AccordionSummary>
-              <AccordionDetails className={classes.details}>
+  const tabs = [
+    ...(!readonly
+      ? [
+          {
+            id: 'map',
+            label: t('mapTitle'),
+            content: (
+              <div className={classes.details}>
                 <FormControl>
                   <InputLabel>{t('mapActive')}</InputLabel>
                   <Select
@@ -305,13 +300,14 @@ const PreferencesPage = () => {
                     label={t('mapOnSelect')}
                   />
                 </FormGroup>
-              </AccordionDetails>
-            </Accordion>
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="subtitle1">{t('deviceTitle')}</Typography>
-              </AccordionSummary>
-              <AccordionDetails className={classes.details}>
+              </div>
+            ),
+          },
+          {
+            id: 'device',
+            label: t('deviceTitle'),
+            content: (
+              <div className={classes.details}>
                 <SelectField
                   value={attributes.devicePrimary || 'name'}
                   onChange={(e) => setAttributes({ ...attributes, devicePrimary: e.target.value })}
@@ -328,13 +324,14 @@ const PreferencesPage = () => {
                   titleGetter={(it) => t(it.name)}
                   label={t('deviceSecondaryInfo')}
                 />
-              </AccordionDetails>
-            </Accordion>
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="subtitle1">{t('sharedSound')}</Typography>
-              </AccordionSummary>
-              <AccordionDetails className={classes.details}>
+              </div>
+            ),
+          },
+          {
+            id: 'sound',
+            label: t('sharedSound'),
+            content: (
+              <div className={classes.details}>
                 <SelectField
                   multiple
                   value={attributes.soundEvents?.split(',') || []}
@@ -356,64 +353,66 @@ const PreferencesPage = () => {
                   keyGetter={(it) => it.key}
                   label={t('eventsSoundAlarms')}
                 />
-              </AccordionDetails>
-            </Accordion>
-          </>
-        )}
-        <Accordion>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle1">{t('userToken')}</Typography>
-          </AccordionSummary>
-          <AccordionDetails className={classes.details}>
-            <TextField
-              label={t('userExpirationTime')}
-              type="date"
-              value={tokenExpiration}
-              onChange={(e) => {
-                setTokenExpiration(e.target.value);
-                setToken(null);
-              }}
+              </div>
+            ),
+          },
+        ]
+      : []),
+    {
+      id: 'token',
+      label: t('userToken'),
+      content: (
+        <div className={classes.details}>
+          <TextField
+            label={t('userExpirationTime')}
+            type="date"
+            value={tokenExpiration}
+            onChange={(e) => {
+              setTokenExpiration(e.target.value);
+              setToken(null);
+            }}
+          />
+          <FormControl>
+            <OutlinedInput
+              multiline
+              rows={6}
+              readOnly
+              type="text"
+              value={token || ''}
+              endAdornment={
+                <InputAdornment position="end">
+                  <div className={classes.verticalActions}>
+                    <IconButton
+                      size="small"
+                      edge="end"
+                      onClick={generateToken}
+                      disabled={!!token}
+                    >
+                      <CachedIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      edge="end"
+                      onClick={() => navigator.clipboard.writeText(token)}
+                      disabled={!token}
+                    >
+                      <ContentCopyIcon fontSize="small" />
+                    </IconButton>
+                  </div>
+                </InputAdornment>
+              }
             />
-            <FormControl>
-              <OutlinedInput
-                multiline
-                rows={6}
-                readOnly
-                type="text"
-                value={token || ''}
-                endAdornment={
-                  <InputAdornment position="end">
-                    <div className={classes.verticalActions}>
-                      <IconButton
-                        size="small"
-                        edge="end"
-                        onClick={generateToken}
-                        disabled={!!token}
-                      >
-                        <CachedIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        edge="end"
-                        onClick={() => navigator.clipboard.writeText(token)}
-                        disabled={!token}
-                      >
-                        <ContentCopyIcon fontSize="small" />
-                      </IconButton>
-                    </div>
-                  </InputAdornment>
-                }
-              />
-            </FormControl>
-          </AccordionDetails>
-        </Accordion>
-        {!readonly && (
-          <>
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="subtitle1">{t('sharedInfoTitle')}</Typography>
-              </AccordionSummary>
-              <AccordionDetails className={classes.details}>
+          </FormControl>
+        </div>
+      ),
+    },
+    ...(!readonly
+      ? [
+          {
+            id: 'info',
+            label: t('sharedInfoTitle'),
+            content: (
+              <div className={classes.details}>
                 <TextField value={versionApp} label={t('settingsAppVersion')} disabled />
                 <TextField
                   value={versionServer || '-'}
@@ -433,17 +432,26 @@ const PreferencesPage = () => {
                     {t('serverReboot')}
                   </Button>
                 )}
-              </AccordionDetails>
-            </Accordion>
-            <div className={classes.buttons}>
-              <Button type="button" color="primary" variant="outlined" onClick={() => navigate(-1)}>
-                {t('sharedCancel')}
-              </Button>
-              <Button type="button" color="primary" variant="contained" onClick={handleSave}>
-                {t('sharedSave')}
-              </Button>
-            </div>
-          </>
+              </div>
+            ),
+          },
+        ]
+      : []),
+  ];
+
+  return (
+    <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'sharedPreferences']}>
+      <Container maxWidth="xs" className={classes.container}>
+        <SlidingTabPanels tabs={tabs} />
+        {!readonly && (
+          <div className={classes.buttons}>
+            <Button type="button" color="primary" variant="outlined" onClick={() => navigate(-1)}>
+              {t('sharedCancel')}
+            </Button>
+            <Button type="button" color="primary" variant="contained" onClick={handleSave}>
+              {t('sharedSave')}
+            </Button>
+          </div>
         )}
       </Container>
     </PageLayout>

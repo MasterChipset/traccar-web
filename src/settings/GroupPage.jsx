@@ -2,15 +2,15 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import TextField from '@mui/material/TextField';
 
-import { Accordion, AccordionSummary, AccordionDetails, Typography } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import EditItemView from './components/EditItemView';
 import EditAttributesAccordion from './components/EditAttributesAccordion';
 import SelectField from '../common/components/SelectField';
+import SlidingTabPanels from '../common/components/SlidingTabPanels';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import SettingsMenu from './components/SettingsMenu';
 import useCommonDeviceAttributes from '../common/attributes/useCommonDeviceAttributes';
 import useGroupAttributes from '../common/attributes/useGroupAttributes';
+import useFeatures from '../common/util/useFeatures';
 import { useCatch } from '../reactHelper';
 import { groupsActions } from '../store';
 import useSettingsStyles from './common/useSettingsStyles';
@@ -23,6 +23,7 @@ const GroupPage = () => {
 
   const commonDeviceAttributes = useCommonDeviceAttributes(t);
   const groupAttributes = useGroupAttributes(t);
+  const features = useFeatures();
 
   const [item, setItem] = useState();
 
@@ -32,6 +33,52 @@ const GroupPage = () => {
   });
 
   const validate = () => item && item.name;
+
+  const tabs = item && [
+    {
+      id: 'required',
+      label: t('sharedRequired'),
+      content: (
+        <div className={classes.details}>
+          <TextField
+            value={item.name || ''}
+            onChange={(event) => setItem({ ...item, name: event.target.value })}
+            label={t('sharedName')}
+          />
+        </div>
+      ),
+    },
+    {
+      id: 'extra',
+      label: t('sharedExtra'),
+      content: (
+        <div className={classes.details}>
+          <SelectField
+            value={item.groupId}
+            onChange={(event) => setItem({ ...item, groupId: Number(event.target.value) })}
+            endpoint="/api/groups"
+            label={t('groupParent')}
+          />
+        </div>
+      ),
+    },
+    ...(!features.disableAttributes
+      ? [
+          {
+            id: 'attributes',
+            label: t('sharedAttributes'),
+            content: (
+              <EditAttributesAccordion
+                bare
+                attributes={item.attributes}
+                setAttributes={(attributes) => setItem({ ...item, attributes })}
+                definitions={{ ...commonDeviceAttributes, ...groupAttributes }}
+              />
+            ),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <EditItemView
@@ -43,40 +90,7 @@ const GroupPage = () => {
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'groupDialog']}
     >
-      {item && (
-        <>
-          <Accordion defaultExpanded>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1">{t('sharedRequired')}</Typography>
-            </AccordionSummary>
-            <AccordionDetails className={classes.details}>
-              <TextField
-                value={item.name || ''}
-                onChange={(event) => setItem({ ...item, name: event.target.value })}
-                label={t('sharedName')}
-              />
-            </AccordionDetails>
-          </Accordion>
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1">{t('sharedExtra')}</Typography>
-            </AccordionSummary>
-            <AccordionDetails className={classes.details}>
-              <SelectField
-                value={item.groupId}
-                onChange={(event) => setItem({ ...item, groupId: Number(event.target.value) })}
-                endpoint="/api/groups"
-                label={t('groupParent')}
-              />
-            </AccordionDetails>
-          </Accordion>
-          <EditAttributesAccordion
-            attributes={item.attributes}
-            setAttributes={(attributes) => setItem({ ...item, attributes })}
-            definitions={{ ...commonDeviceAttributes, ...groupAttributes }}
-          />
-        </>
-      )}
+      {item && <SlidingTabPanels tabs={tabs} />}
     </EditItemView>
   );
 };

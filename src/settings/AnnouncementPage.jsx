@@ -1,18 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
   Container,
   TextField,
   Button,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import SettingsMenu from './components/SettingsMenu';
+import SlidingTabPanels from '../common/components/SlidingTabPanels';
 import { useCatchCallback } from '../reactHelper';
 import useSettingsStyles from './common/useSettingsStyles';
 import SelectField from '../common/components/SelectField';
@@ -39,41 +35,46 @@ const AnnouncementPage = () => {
     navigate(-1);
   }, [users, notificator, message, navigate]);
 
+  const tabs = [
+    {
+      id: 'required',
+      label: t('sharedRequired'),
+      content: (
+        <div className={classes.details}>
+          <SelectField
+            multiple
+            value={users}
+            onChange={(e) => setUsers(e.target.value)}
+            endpoint="/api/users"
+            label={t('settingsUsers')}
+          />
+          <SelectField
+            value={notificator}
+            onChange={(e) => setNotificator(e.target.value)}
+            endpoint="/api/notifications/notificators?announcement=true"
+            keyGetter={(it) => it.type}
+            titleGetter={(it) => t(prefixString('notificator', it.type))}
+            label={t('notificationNotificators')}
+          />
+          <TextField
+            value={message.subject}
+            onChange={(e) => setMessage({ ...message, subject: e.target.value })}
+            label={t('sharedSubject')}
+          />
+          <TextField
+            value={message.body}
+            onChange={(e) => setMessage({ ...message, body: e.target.value })}
+            label={t('commandMessage')}
+          />
+        </div>
+      ),
+    },
+  ];
+
   return (
     <PageLayout menu={<SettingsMenu />} breadcrumbs={['serverAnnouncement']}>
       <Container maxWidth="xs" className={classes.container}>
-        <Accordion defaultExpanded>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle1">{t('sharedRequired')}</Typography>
-          </AccordionSummary>
-          <AccordionDetails className={classes.details}>
-            <SelectField
-              multiple
-              value={users}
-              onChange={(e) => setUsers(e.target.value)}
-              endpoint="/api/users"
-              label={t('settingsUsers')}
-            />
-            <SelectField
-              value={notificator}
-              onChange={(e) => setNotificator(e.target.value)}
-              endpoint="/api/notifications/notificators?announcement=true"
-              keyGetter={(it) => it.type}
-              titleGetter={(it) => t(prefixString('notificator', it.type))}
-              label={t('notificationNotificators')}
-            />
-            <TextField
-              value={message.subject}
-              onChange={(e) => setMessage({ ...message, subject: e.target.value })}
-              label={t('sharedSubject')}
-            />
-            <TextField
-              value={message.body}
-              onChange={(e) => setMessage({ ...message, body: e.target.value })}
-              label={t('commandMessage')}
-            />
-          </AccordionDetails>
-        </Accordion>
+        <SlidingTabPanels tabs={tabs} />
         <div className={classes.buttons}>
           <Button type="button" color="primary" variant="outlined" onClick={() => navigate(-1)}>
             {t('sharedCancel')}

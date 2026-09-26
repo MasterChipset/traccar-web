@@ -2,18 +2,14 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
   Container,
   TextField,
   Button,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import SettingsMenu from './components/SettingsMenu';
+import SlidingTabPanels from '../common/components/SlidingTabPanels';
 import { useCatch } from '../reactHelper';
 import { useAttributePreference } from '../common/util/preferences';
 import { distanceFromMeters, distanceToMeters, distanceUnitString } from '../common/util/converter';
@@ -51,36 +47,41 @@ const AccumulatorsPage = () => {
     navigate(-1);
   });
 
+  const tabs = item && [
+    {
+      id: 'required',
+      label: t('sharedRequired'),
+      content: (
+        <div className={classes.details}>
+          <TextField
+            type="number"
+            value={item.hours / 3600000}
+            onChange={(event) =>
+              setItem({ ...item, hours: Number(event.target.value) * 3600000 })
+            }
+            label={t('positionHours')}
+          />
+          <TextField
+            type="number"
+            value={distanceFromMeters(item.totalDistance, distanceUnit)}
+            onChange={(event) =>
+              setItem({
+                ...item,
+                totalDistance: distanceToMeters(Number(event.target.value), distanceUnit),
+              })
+            }
+            label={`${t('deviceTotalDistance')} (${distanceUnitString(distanceUnit, t)})`}
+          />
+        </div>
+      ),
+    },
+  ];
+
   return (
     <PageLayout menu={<SettingsMenu />} breadcrumbs={['sharedDeviceAccumulators']}>
       {item && (
         <Container maxWidth="xs" className={classes.container}>
-          <Accordion defaultExpanded>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1">{t('sharedRequired')}</Typography>
-            </AccordionSummary>
-            <AccordionDetails className={classes.details}>
-              <TextField
-                type="number"
-                value={item.hours / 3600000}
-                onChange={(event) =>
-                  setItem({ ...item, hours: Number(event.target.value) * 3600000 })
-                }
-                label={t('positionHours')}
-              />
-              <TextField
-                type="number"
-                value={distanceFromMeters(item.totalDistance, distanceUnit)}
-                onChange={(event) =>
-                  setItem({
-                    ...item,
-                    totalDistance: distanceToMeters(Number(event.target.value), distanceUnit),
-                  })
-                }
-                label={`${t('deviceTotalDistance')} (${distanceUnitString(distanceUnit, t)})`}
-              />
-            </AccordionDetails>
-          </Accordion>
+          <SlidingTabPanels tabs={tabs} />
           <div className={classes.buttons}>
             <Button type="button" color="primary" variant="outlined" onClick={() => navigate(-1)}>
               {t('sharedCancel')}
