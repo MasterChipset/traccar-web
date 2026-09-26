@@ -182,40 +182,49 @@ const SlidingTabPanels = ({ tabs, arrowIconSize = 32, initialId }) => {
 
       <Box
         sx={{
-          pt: 2,
           width: '100%',
           position: 'relative',
           overflow: 'hidden',
         }}
       >
-        {tabs.map((tabDef) => (
-          <Box
-            key={tabDef.id}
-            onTransitionEnd={
-              tabDef.id === activeId
-                ? handlePanelTransitionEnd
-                : undefined
-            }
-            sx={{
-              position:
-                tabDef.id === activeId ? 'relative' : 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              boxSizing: 'border-box',
+        {tabs.map((tabDef) => {
+          const isActive = tabDef.id === activeId;
+          return (
+            <Box
+              key={tabDef.id}
+              onTransitionEnd={
+                isActive ? handlePanelTransitionEnd : undefined
+              }
+              sx={{
+                position: isActive ? 'relative' : 'absolute',
+                // Padding on the parent only affects in-flow
+                // content — an absolutely positioned panel's
+                // `top` ignores it entirely and would sit flush
+                // against the tab bar. So the gap below the tab
+                // bar (16px, matching the old `pt: 2`) is applied
+                // explicitly here instead: as margin for the
+                // in-flow (active) panel, and as a matching `top`
+                // offset for every other (absolutely positioned)
+                // panel, so a panel mid-transition keeps the same
+                // spacing as the one settled in place.
+                ...(isActive ? { mt: '16px' } : { top: '16px' }),
+                left: 0,
+                width: '100%',
+                boxSizing: 'border-box',
 
-              transform: `translateX(${
-                getPanelSlot(tabDef.id) * 100
-              }%)`,
+                transform: `translateX(${
+                  getPanelSlot(tabDef.id) * 100
+                }%)`,
 
-              transition: getPanelTransition(tabDef.id),
+                transition: getPanelTransition(tabDef.id),
 
-              willChange: 'transform',
-            }}
-          >
-            {tabDef.content}
-          </Box>
-        ))}
+                willChange: 'transform',
+              }}
+            >
+              {tabDef.content}
+            </Box>
+          );
+        })}
       </Box>
     </>
   );

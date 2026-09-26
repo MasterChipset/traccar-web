@@ -1,4 +1,5 @@
 Revision History:
+2026/09/27: SlidingTabPanels.jsx modified to fix the sliding issue
 
 2026/09/27: All settings pages accordions converted to tabs
             SlidingTabPanels.jsx modified
